@@ -72,25 +72,6 @@ a { color: inherit; text-decoration: none; }
   100% { transform: translate(0, 0); }
 }
 
-/* ---------- custom cursor ---------- */
-
-.cursor {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 14px; height: 14px;
-  z-index: 100;
-  pointer-events: none;
-  mix-blend-mode: difference;
-  background: #fff;
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-@media (pointer: fine) {
-  .cursor { display: block; }
-  body, a, button { cursor: none; }
-}
-
 /* ---------- nav ---------- */
 
 .nav {
@@ -175,18 +156,6 @@ a { color: inherit; text-decoration: none; }
   display: block;
   filter: contrast(1.05);
 }
-
-.hero__tag {
-  position: absolute;
-  z-index: 2;
-  font-size: 10px;
-  letter-spacing: .14em;
-  color: var(--ink);
-  opacity: .8;
-}
-
-.hero__tag--tl { top: 4.4rem; left: 1.2rem; }
-.hero__tag--br { bottom: 1.2rem; right: 1.2rem; text-align: right; }
 
 .hero__rows {
   grid-column: 2;
@@ -646,14 +615,6 @@ a { color: inherit; text-decoration: none; }
 
 .tickets__btn:hover { background: var(--ink); border-color: var(--ink); }
 
-.tickets__note {
-  display: block;
-  font-size: 10px;
-  letter-spacing: .14em;
-  color: var(--mid);
-  margin-top: .8rem;
-}
-
 /* 3. tracks */
 
 .tracks__list { list-style: none; margin-top: 1rem; }
@@ -862,7 +823,6 @@ a { color: inherit; text-decoration: none; }
   .hero__rows { grid-column: 1; padding-top: 7rem; }
   .hero__block { width: 78vw; bottom: 15%; }
   .hero__meta { left: 1.4rem; bottom: 4%; }
-  .hero__tag--tl { top: 4.6rem; }
   .nav__links { display: none; }
 }
 

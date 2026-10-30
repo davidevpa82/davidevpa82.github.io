@@ -21,7 +21,7 @@
         var track = document.createElement("span");
         track.className = "footer__track";
         track.textContent = text + text;
-        var dur = 50 + Math.random() * 40;
+        var dur = 80 + Math.random() * 50;
         track.style.setProperty("--dur", dur.toFixed(1) + "s");
         track.style.animationDelay = (-Math.random() * dur).toFixed(1) + "s";
         row.appendChild(track);
@@ -285,26 +285,6 @@
     revealEls.forEach(function (el) { io.observe(el); });
   } else {
     revealEls.forEach(function (el) { el.classList.add("is-in"); });
-  }
-
-  /* ---------- custom cursor ---------- */
-
-  var cursor = document.getElementById("cursor");
-  if (cursor && window.matchMedia("(pointer: fine)").matches && !reduced) {
-    var mx = -100, my = -100, cx = -100, cy = -100;
-    var hovering = false;
-    window.addEventListener("mousemove", function (e) {
-      mx = e.clientX; my = e.clientY;
-      var t = e.target;
-      hovering = !!(t && t.closest && t.closest("a, button"));
-    });
-    (function loop() {
-      cx += (mx - cx) * 0.28;
-      cy += (my - cy) * 0.28;
-      cursor.style.transform =
-        "translate(" + cx + "px," + cy + "px) translate(-50%,-50%) rotate(45deg) scale(" + (hovering ? 2.1 : 1) + ")";
-      requestAnimationFrame(loop);
-    })();
   }
 
   /* ---------- local clock ---------- */
