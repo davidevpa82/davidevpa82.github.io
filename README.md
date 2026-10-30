@@ -1,5 +1,3 @@
-# 3g0th2002
+# moved
 
-Официальный сайт артиста 3g0th2002. Концерт 21.11, клуб «Салют».
-
-https://davidevpa82.github.io/3g0th2002-site/
+Сайт переехал на https://3g0th2002.github.io/
