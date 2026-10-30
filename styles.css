@@ -673,6 +673,9 @@ a { color: inherit; text-decoration: none; }
   color: var(--paper);
 }
 
+/* buffering: button blinks until sound starts */
+.track.is-loading .trk-play { animation: blink .5s steps(2) infinite; }
+
 .trk-name {
   font-family: var(--font-display);
   font-weight: 500;

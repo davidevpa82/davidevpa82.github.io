@@ -264,14 +264,40 @@
       currentAudio.pause();
       try { currentAudio.currentTime = 0; } catch (e) { /* not loaded yet */ }
     }
-    if (currentRow) currentRow.classList.remove("is-playing");
+    if (currentRow) currentRow.classList.remove("is-playing", "is-loading");
     currentAudio = null;
     currentRow = null;
+  }
+
+  // one Audio per track, kept so a replay doesn't download again
+  function getAudio(row) {
+    if (!row._audio) {
+      var audio = new Audio();
+      audio.preload = "none";
+      audio.src = row.getAttribute("data-src");
+      audio.addEventListener("ended", stopCurrent);
+      audio.addEventListener("waiting", function () { row.classList.add("is-loading"); });
+      audio.addEventListener("playing", function () { row.classList.remove("is-loading"); });
+      row._audio = audio;
+    }
+    return row._audio;
+  }
+
+  // start buffering as soon as a finger / mouse heads for the button
+  function warm(row) {
+    var audio = getAudio(row);
+    if (audio.preload !== "auto") {
+      audio.preload = "auto";
+      audio.load();
+    }
   }
 
   trackRows.forEach(function (row) {
     var btn = row.querySelector(".trk-play");
     if (!btn) return;
+    ["pointerenter", "touchstart", "focus"].forEach(function (ev) {
+      btn.addEventListener(ev, function () { warm(row); }, { passive: true });
+    });
     btn.addEventListener("click", function () {
       if (currentRow === row && currentAudio) {
         if (currentAudio.paused) {
@@ -284,15 +310,13 @@
         return;
       }
       stopCurrent();
-      var audio = new Audio();
-      audio.preload = "none";
-      audio.src = row.getAttribute("data-src");
-      audio.addEventListener("ended", stopCurrent);
+      var audio = getAudio(row);
       currentAudio = audio;
       currentRow = row;
       row.classList.add("is-playing");
+      if (audio.readyState < 3) row.classList.add("is-loading");
       audio.play().catch(function () {
-        row.classList.remove("is-playing");
+        row.classList.remove("is-playing", "is-loading");
       });
     });
   });
