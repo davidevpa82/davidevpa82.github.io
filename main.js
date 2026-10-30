@@ -3,6 +3,25 @@
   "use strict";
 
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // phones / tablets: cheaper effects, same look
+  var lite = window.matchMedia("(max-width: 960px), (pointer: coarse)").matches;
+  if (lite) document.documentElement.classList.add("lite");
+
+  /* ---------- cheap grain for phones: pre-baked ink noise, no blend modes ---------- */
+
+  if (lite) {
+    var tile = document.createElement("canvas");
+    tile.width = tile.height = 160;
+    var tctx = tile.getContext("2d");
+    var timg = tctx.createImageData(160, 160);
+    for (var gi = 0; gi < timg.data.length; gi += 4) {
+      timg.data[gi] = timg.data[gi + 1] = timg.data[gi + 2] = 17;
+      timg.data[gi + 3] = Math.random() * 75;
+    }
+    tctx.putImageData(timg, 0, 0);
+    var grainEl = document.querySelector(".grain:not(.grain--soft)");
+    if (grainEl) grainEl.style.backgroundImage = "url(" + tile.toDataURL() + ")";
+  }
 
   /* ---------- repeated word rows ---------- */
 
@@ -31,7 +50,7 @@
       if (i === opts.redRow) row.classList.add("is-red");
       if (opts.vary !== false) {
         row.style.opacity = (0.14 + Math.random() * 0.66).toFixed(2);
-        if (Math.random() < 0.22) {
+        if (!lite && Math.random() < 0.22) {
           row.style.filter = "blur(" + (Math.random() * 2.2 + 0.6).toFixed(1) + "px)";
         }
         if (!opts.marquee) row.style.marginLeft = (Math.random() * -0.06 * 100).toFixed(1) + "vw";
@@ -70,7 +89,7 @@
 
     function paintBase() {
       var rect = canvas.getBoundingClientRect();
-      var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      var dpr = lite ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
       W = Math.max(2, Math.floor(rect.width));
       H = Math.max(2, Math.floor(rect.height));
       canvas.width = base.width = W * dpr;
@@ -81,8 +100,8 @@
       baseCtx.scale(dpr, dpr);
 
       var g = baseCtx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, "#a8a8a8");
-      g.addColorStop(1, "#8a8a8a");
+      g.addColorStop(0, "#8a8a8a");
+      g.addColorStop(1, "#6a6a6a");
       baseCtx.fillStyle = g;
       baseCtx.fillRect(0, 0, W, H);
 
@@ -100,7 +119,7 @@
         var x = b[1] * W, y = b[2] * H, rr = b[3] * W;
         var rg = baseCtx.createRadialGradient(x, y, 0, x, y, Math.max(10, rr));
         rg.addColorStop(0, b[0]);
-        rg.addColorStop(1, "rgba(138,138,138,0)");
+        rg.addColorStop(1, "rgba(106,106,106,0)");
         baseCtx.globalAlpha = 0.5;
         baseCtx.fillStyle = rg;
         baseCtx.fillRect(0, 0, W, H);
@@ -127,7 +146,7 @@
     }
 
     function render() {
-      var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      var dpr = lite ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
       ctx.drawImage(base, 0, 0, W, H);
@@ -177,7 +196,14 @@
     paintBase();
     render();
     if (!reduced) {
-      setInterval(render, 160); // ~6fps shutter feel
+      var heroVisible = true;
+      if ("IntersectionObserver" in window) {
+        new IntersectionObserver(function (entries) {
+          heroVisible = entries[0].isIntersecting;
+        }).observe(canvas);
+      }
+      // ~6fps shutter feel, slower on phones; idle when scrolled away
+      setInterval(function () { if (heroVisible) render(); }, lite ? 240 : 160);
     }
   }
 
@@ -205,7 +231,8 @@
         for (var x = 0; x < w; x++) {
           var k = (y * w + x) * 4;
           var v = Math.min(255, Math.random() * 255 + boost);
-          d[k] = v; d[k + 1] = v; d[k + 2] = v; d[k + 3] = 255;
+          // ink with alpha = same look as multiplying gray noise, no blend mode needed
+          d[k] = 17; d[k + 1] = 17; d[k + 2] = 17; d[k + 3] = 255 - v;
         }
       }
       sctx.putImageData(img, 0, 0);
@@ -222,7 +249,7 @@
           staticVisible = entries[0].isIntersecting;
         }).observe(staticCanvas);
       }
-      setInterval(function () { if (staticVisible) paintStatic(); }, 110);
+      setInterval(function () { if (staticVisible) paintStatic(); }, lite ? 180 : 110);
     }
   }
 
@@ -285,6 +312,29 @@
     revealEls.forEach(function (el) { io.observe(el); });
   } else {
     revealEls.forEach(function (el) { el.classList.add("is-in"); });
+  }
+
+  /* ---------- custom cursor ---------- */
+
+  var cursor = document.getElementById("cursor");
+  if (cursor && window.matchMedia("(pointer: fine)").matches && !reduced) {
+    var mx = -100, my = -100, cx = -100, cy = -100;
+    var hovering = false;
+    var cursorRaf = 0;
+    function moveCursor() {
+      cx += (mx - cx) * 0.28;
+      cy += (my - cy) * 0.28;
+      cursor.style.transform =
+        "translate(" + cx + "px," + cy + "px) translate(-50%,-50%) rotate(45deg) scale(" + (hovering ? 2.1 : 1) + ")";
+      // stop the loop once the cursor has caught up
+      cursorRaf = Math.abs(mx - cx) + Math.abs(my - cy) > 0.3 ? requestAnimationFrame(moveCursor) : 0;
+    }
+    window.addEventListener("mousemove", function (e) {
+      mx = e.clientX; my = e.clientY;
+      var t = e.target;
+      hovering = !!(t && t.closest && t.closest("a, button"));
+      if (!cursorRaf) cursorRaf = requestAnimationFrame(moveCursor);
+    });
   }
 
   /* ---------- local clock ---------- */
